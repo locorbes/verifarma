@@ -1,0 +1,270 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "CHALLENGE DOCS",
+        "description": "Esta es la documentación del Challenge para Verifarma",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/farmacias/{id}": {
+            "get": {
+                "tags": [
+                    "Farmacias"
+                ],
+                "summary": "Obtiene una farmacia por ID",
+                "description": "Obtiene los datos de una farmacia dependiendo del ID.",
+                "operationId": "getFarmaciaID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la farmacia",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datos obtenidos correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "nombre": {
+                                            "type": "string",
+                                            "example": "Farmacia Central"
+                                        },
+                                        "direccion": {
+                                            "type": "string",
+                                            "example": "Dirección 123"
+                                        },
+                                        "latitud": {
+                                            "type": "number",
+                                            "example": -34.5167375
+                                        },
+                                        "longitud": {
+                                            "type": "number",
+                                            "example": -58.4758169
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Farmacia no encontrada",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Farmacia no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "basicAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/farmacias": {
+            "get": {
+                "tags": [
+                    "Farmacias"
+                ],
+                "summary": "Obtiene la farmacia más cercana",
+                "description": "Obtiene la farmacia más cercana. Si no se proporciona lat (latitud) y lon (longitud) devuelve todas las farmacias.",
+                "operationId": "getFarmacia",
+                "parameters": [
+                    {
+                        "name": "lat",
+                        "in": "query",
+                        "description": "Latitud de la ubicación",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "example": "-34.5167375"
+                        }
+                    },
+                    {
+                        "name": "lon",
+                        "in": "query",
+                        "description": "Longitud de la ubicación",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "example": "-58.4758169"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datos obtenidos correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Farmacia Central"
+                                            },
+                                            "direccion": {
+                                                "type": "string",
+                                                "example": "Dirección 123"
+                                            },
+                                            "latitud": {
+                                                "type": "number",
+                                                "example": -34.5167375
+                                            },
+                                            "longitud": {
+                                                "type": "number",
+                                                "example": -58.4758169
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No se encontraron farmacias cercanas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No se encontraron farmacias cercanas"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "basicAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Farmacias"
+                ],
+                "summary": "Crea una nueva farmacia",
+                "description": "Crea una nueva farmacia en la base de datos.",
+                "operationId": "createFarmacia",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nombre",
+                                    "direccion",
+                                    "latitud",
+                                    "longitud"
+                                ],
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "example": "Farmacia Central"
+                                    },
+                                    "direccion": {
+                                        "type": "string",
+                                        "example": "Calle 123"
+                                    },
+                                    "latitud": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -58.4758169
+                                    },
+                                    "longitud": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -118.243683
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Farmacia creada correctamente"
+                    },
+                    "422": {
+                        "description": "Solicitud inválida",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no son válidos"
+                                        },
+                                        "errors": {
+                                            "type": "string",
+                                            "example": "Descripción de errores"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "basicAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Farmacias",
+            "description": "Farmacias"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "basicAuth": {
+                "type": "http",
+                "scheme": "basic"
+            }
+        }
+    },
+    "security": {
+        "1": {
+            "basicAuth": []
+        }
+    }
+}
