@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use app\Http\Requests\FindPharmacyRequest;
 use App\Models\Farmacia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -17,8 +18,9 @@ class FarmaciasController extends Controller
 {
     public function all()
     {
-        $farmacias = Farmacia::all();
-        return response()->json($farmacias);
+        // No es una buena idea utilizar la Facade de los modelos directamente en el controller
+        // no es necesario una variable adicional si no se va a utilizar
+        return response()->json(Farmacia::all());
     }
     /**
      * @OA\Get(
@@ -57,13 +59,15 @@ class FarmaciasController extends Controller
      *     )
      * )
      */
-    public function read($id)
+    public function read(Farmacia $farmacia)
     {
-        $farmacia = Farmacia::find($id);
-
-        if (!$farmacia) {
+        // misma recomendacion, evitar usar facade de modelos directamente en el controller
+        // se puede ahorrar una linea usando directamente la variable en el if (no es ni mejor ni peor, es una alternativa)
+        // evitar tener mas de un return en caso de no ser necesario
+        // en esta situacion, podriamos usar un RouteBinding (dentro de RouteServiceProvider) para evitar tener que buscar la farmacia aca
+       /* if (!$farmacia = Farmacia::find($id)) {
             return response()->json(['message' => 'Farmacia no encontrada'], 404);
-        }
+        }*/
 
         return response()->json($farmacia);
     }
@@ -115,30 +119,22 @@ class FarmaciasController extends Controller
      *     )
      * )
      */
-    public function index(Request $request)
+    public function index(FindPharmacyRequest $request)
     {
+        //demasiado codigo para estar dentro del controller
+        // es una buena idea separar el metodo en 2, uno para obtener todas las farmacias y otro para obtener la mas cercana
+        // quien debe validar la request es el objeto request
+        // la modificacion que planteo seria para la busqueda en este caso
+        // cuando llega aca, FindPharmacyRequest ya valido los atributos, por ende ya sabemos que existen y podemos hacer lo siguiente
+
         if ($request->has(['lat', 'lon'])) {
             $request->validate([
                 'lat' => 'required|numeric',
                 'lon' => 'required|numeric',
             ]);
 
-            $lat = $request->input('lat');
-            $lon = $request->input('lon');
 
-            $farmacias = Farmacia::all();
-
-            $farmaciaCercana = null;
-            $minDistancia = PHP_FLOAT_MAX;
-
-            foreach ($farmacias as $farmacia) {
-                $distancia = $this->calculate($lat, $lon, $farmacia->latitud, $farmacia->longitud);
-                if ($distancia < $minDistancia) {
-                    $minDistancia = $distancia;
-                    $farmaciaCercana = $farmacia;
-                    $farmaciaCercana->distancia = $distancia;
-                }
-            }
+            $farmaciaCercana = $this->getFarmaciaCercana($request);
 
             if ($farmaciaCercana) {
                 return response()->json($farmaciaCercana);
@@ -206,6 +202,10 @@ class FarmaciasController extends Controller
      *         )
      *     )
      * )
+     *
+     * Misma recomendacion relacionada con la request. la validacion es parte de la request, no del controller.
+     * sin la validacion este metodo seria de dos lineas
+     * usar servicio para interactuar con los modelos
      */
     public function create(Request $request)
     {
@@ -227,6 +227,11 @@ class FarmaciasController extends Controller
 
         return response()->json($farmacia, 201);
     }
+
+    /**
+     * Esta funcion, como la nueva propuesta por mi deberian formar parte de un service que se inyecte en el controller
+     * los attributos deberian estar tipados para evitar conflictos de tipos
+     */
     private function calculate($lat1, $lon1, $lat2, $lon2)
     {
         $radioTierra = 6371; //El radio de la tierra en kilometros u_u
@@ -238,6 +243,29 @@ class FarmaciasController extends Controller
         $c = 2 * atan2(sqrt($a), sqrt(1-$a));
         $distancia = $radioTierra * $c;
         return $distancia;
+    }
+
+    /**
+     * @param  FindPharmacyRequest  $request
+     * @return mixed|null
+     * Esto lo extraigo para separar responsabilidades, pero deberia ir en una clase service, no en el controller
+     * misma recomendacion acerca de la utilizacion de facade de modelos en el controller
+     */
+    public function getFarmaciaCercana(FindPharmacyRequest $request): mixed
+    {
+        $farmaciaCercana = null;
+        $minDistancia = PHP_FLOAT_MAX;
+
+        foreach (Farmacia::all() as $farmacia) {
+            $distancia = $this->calculate($request->float('lat'), $request->float('lon'), $farmacia->latitud,
+                $farmacia->longitud);
+            if ($distancia < $minDistancia) {
+                $minDistancia = $distancia;
+                $farmaciaCercana = $farmacia;
+                $farmaciaCercana->distancia = $distancia;
+            }
+        }
+        return $farmaciaCercana;
     }
 }
 

@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\FarmaciasController;
 
 Route::middleware('auth.basic.custom')->group(function () {
     Route::get('/farmacias', [FarmaciasController::class, 'index']);
-    Route::get('/farmacias/{id}', [FarmaciasController::class, 'read']);
+    Route::get('/farmacias/{farmacia}', [FarmaciasController::class, 'read']);
     Route::post('/farmacias', [FarmaciasController::class, 'create']);
 });
 
